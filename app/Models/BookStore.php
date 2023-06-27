@@ -22,7 +22,6 @@ class BookStore extends Model
         'name',
         'isbn',
         'user_id',
-        'publishing_company_id',
         'value',
 
     ];
