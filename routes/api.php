@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\BooksController;
 */
 
 Route::post('/auth/login', [AuthController::class, 'loginUser']);
-
+Route::post('/bookstore/book/store', [BookSController::class, 'store']);
 Route::group(['prefix' => 'users'], function () {
     Route::get('/list', [UsersController::class, 'index']);
     Route::post('/store', [UsersController::class, 'store']);
@@ -34,7 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::group(['prefix' => 'book'], function () {
             Route::get('/list', [BookSController::class, 'index']);
             Route::get('/edit/{id}', [BookSController::class, 'edit']);
-            Route::post('/store', [BookSController::class, 'store']);
+
             Route::put('/update/{id}', [BookSController::class, 'update']);
             Route::delete('/delete/{id}', [BookSController::class, 'destroy']);
 

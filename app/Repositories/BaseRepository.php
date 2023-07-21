@@ -46,15 +46,6 @@ class BaseRepository
         return $this->model->where($column, $value)->get();
     }
 
-    public function findByColumns(array $columns, array $relations = [])
-    {
-        if($relations)
-        {
-            return $this->model->with($relations)->where($columns)->get();
-        }
-        return $this->model->where($columns)->get();
-    }
-
     public function findByColumnLike(string $column, $value, array $relations = [])
     {
         if($relations)
@@ -79,7 +70,7 @@ class BaseRepository
         return $this->model->where($column, $value)->update($attributes);
     }
 
-    public function delete(int $id): bool
+    public function delete(int $id)
     {
         return $this->model->delete($id);
     }

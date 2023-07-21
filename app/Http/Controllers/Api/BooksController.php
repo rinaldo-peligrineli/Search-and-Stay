@@ -8,10 +8,12 @@ use App\Repositories\BookRepository;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Responses\ApiResponse;
 
 class BooksController extends Controller
 {
     protected $bookRepository;
+
 
     public function __construct(BookRepository $bookRepository) {
         $this->bookRepository = $bookRepository;
@@ -21,18 +23,23 @@ class BooksController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index(Request $request)
+    public function index()
     {
         try {
             $bookStore = $this->bookRepository->getBooks();
 
-            if($bookStore->count() == 0)
-                return response()->json(['success' => true, 'message' => 'Nenhum registro encontrado', 'data' => []], Response::HTTP_OK);
+            if($bookStore->count() == 0)  {
+                $responsable = new ApiResponse(Response::HTTP_BAD_REQUEST, 'Nenhum registro encontrado');
+                $responsable->toResponse($bookStore);
+            }
 
-            if($bookStore->count() > 0)
-                return response()->json(['success' => true, 'message' => 'Registros encontrados', 'data' => $bookStore], Response::HTTP_OK);
+            if($bookStore->count() > 0) {
+                $responsable = new ApiResponse(Response::HTTP_OK, 'Registro(s) encontrados', true);
+                return $responsable->toResponse($bookStore);
+            }
         } catch(\Exception $e) {
-            return response()->json(['error' => true, 'message' => false, 'data' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $responsable = new ApiResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            return $responsable->toResponse($e);
         }
     }
 
@@ -44,23 +51,17 @@ class BooksController extends Controller
     public function store(BookRequest $request)
     {
         try {
-
             $arrBookStore = $request->all();
-            $arrBookStore['user_id'] = Auth::id();
+            $arrBookStore['user_id'] = 2;
 
             $bookStore = $this->bookRepository->save($arrBookStore);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Livro incluido com sucesso',
-                'data' => $bookStore
-            ], Response::HTTP_OK);
+            $responsable = new ApiResponse(Response::HTTP_OK, 'Registro Incluido');
+            return $responsable->toResponse($bookStore);
 
         } catch (\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'message' => $th->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $responsable = new ApiResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $th->getMessage());
+            return $responsable->toResponse($th);
         }
     }
 
@@ -73,16 +74,19 @@ class BooksController extends Controller
     {
         try {
             $bookStore = $this->bookRepository->find($id);
-            return response()->json([
-                'status' => true,
-                'message' => 'Livro encontrado',
-                'data' => $bookStore
-            ], Response::HTTP_OK);
+            $code = Response::HTTP_OK;
+            $message = 'Registro encontrado';
+            if($bookStore == null) {
+                $code = Response::HTTP_UNPROCESSABLE_ENTITY;
+                $message = 'Registro não encontrado';
+            }
+
+            $responsable = new ApiResponse($code, $message);
+            return $responsable->toResponse($bookStore);
+
         } catch(\Throwable $th) {
-            return response()->json([
-                'status' => false,
-                'message' => $th->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $responsable = new ApiResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $th->getMessage());
+            return $responsable->toResponse($th);
         }
     }
 
@@ -96,17 +100,13 @@ class BooksController extends Controller
         try {
 
             $this->bookRepository->update($id, $request->all());
+            $responsable = new ApiResponse(Response::HTTP_OK, 'Livro alterado com sucesso');
+            $bookStore = $this->bookRepository->find($id);
+            return $responsable->toResponse($bookStore);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Livro alterado com sucesso',
-                'data' => $id
-            ], Response::HTTP_OK);
         } catch(\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $responsable = new ApiResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            return $responsable->toResponse($e);
         }
     }
 
@@ -120,16 +120,11 @@ class BooksController extends Controller
         try {
             $bookStore = $this->bookRepository->find($id);
             $bookStore->delete();
-            return response()->json([
-                'status' => true,
-                'message' => 'Livro excluido com sucesso',
-                'data' => $id
-            ], Response::HTTP_OK);
+            $responsable = new  ApiResponse(Response::HTTP_OK, 'Livro excluido com sucesso');
+            return $responsable->toResponse($id);
         } catch(\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $responsable = new ApiResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            return $responsable->toResponse($e);
         }
     }
 
